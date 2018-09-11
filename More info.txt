@@ -1,0 +1,12 @@
+Research more on:
+- SDR
+- custom size silicon solar cell
+
+Current Hardware Used:
+- AS726X (spectral sensor)
+- XA1110 (GPS)
+
+Other sensors:
+-SEN-14571-sparkFun triple axis Magnetometer breakout
+-SEN-14349-environmental combo breakout
+-AS726X Spectra sensor
