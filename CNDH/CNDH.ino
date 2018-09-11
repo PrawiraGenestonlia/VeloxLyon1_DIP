@@ -39,7 +39,7 @@ void loop() {
  // }
   for (byte x = 0 ; x < NUMBER_OF_SENSORS ; x++) {
     enableMuxPort(x); //Tell mux to connect to this port, and this port only
-    if (SpectralSensor.available()) {
+    if (SpectralSensor.dataAvailable()) {
       SpectralSensor.takeMeasurements();
       SpectralSensor.printMeasurements();
     }
