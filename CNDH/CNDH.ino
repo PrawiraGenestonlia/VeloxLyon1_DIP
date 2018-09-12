@@ -94,7 +94,8 @@ void loop() {
   update_CCS_BME();
   disableMuxPort(CCS_BME_MuxPort);
 
-  const char text[] = "Hello World";
+
+  const char text[] = "This is " ;
   radio.write(&text, sizeof(text));
   
   delay(500); //Wait for next reading
