@@ -94,6 +94,9 @@ void loop() {
   update_CCS_BME();
   disableMuxPort(CCS_BME_MuxPort);
 
+  enableMuxPort(MLXMuxPort);
+  update_mlx();
+  disableMuxPort(MLXMuxPort);
 
   const char text[] = "This is " ;
   radio.write(&text, sizeof(text));
@@ -279,4 +282,19 @@ void update_CCS_BME() {
   }
 }
 
+void update_mlx(){
+  mlx.readData(data); //Read the values from the sensor
+
+  Serial.print("magX[");
+  Serial.print(data.x);
+  Serial.print("] magY[");
+  Serial.print(data.y);
+  Serial.print("] magZ[");
+  Serial.print(data.z);
+  Serial.print("] temperature(C)[");
+  Serial.print(data.t);
+  Serial.print("]");
+
+  Serial.println();
+}
 
