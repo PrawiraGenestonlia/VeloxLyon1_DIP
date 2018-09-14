@@ -100,7 +100,7 @@ void loop() {
 
   const char text[] = "This is " ;
   radio.write(&text, sizeof(text));
-  
+
   delay(500); //Wait for next reading
 
 
@@ -297,4 +297,3 @@ void update_mlx(){
 
   Serial.println();
 }
-
