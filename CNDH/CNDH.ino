@@ -26,6 +26,7 @@ BME280 myBME280;
 MLX90393 mlx;
 MLX90393::txyz data; //Create a structure, called data, of four floats (t, x, y, and z)
 RF24 radio(7, 8); // CE, CSN
+String combine_data_packet;
 
 const byte address[6] = "00001";
 
@@ -97,14 +98,34 @@ void loop() {
   enableMuxPort(MLXMuxPort);
   update_mlx();
   disableMuxPort(MLXMuxPort);
-
+  combine_data_packet = combine_output();
   const char text[] = "This is " ;
-  radio.write(&text, sizeof(text));
+//  radio.write(&text, sizeof(text));
+  Serial.println(combine_data_packet);
+  radio.write(&combine_data_packet, sizeof(combine_data_packet));
 
   delay(500); //Wait for next reading
 
 
 
+}
+
+String combine_output(){
+  String current_string;
+  current_string = "STR"; //start
+  current_string += gps.date.month();
+  current_string += "/";
+  current_string += gps.date.day();
+  current_string += "/";
+  current_string += gps.date.year();
+  current_string += ", ";
+  current_string += gps.location.lat(); //GPS latitude
+  current_string += ", ";
+  current_string += gps.location.lng(); //GPS longitude
+  current_string += ", ";
+  
+  current_string += "END"; //end
+  return current_string;
 }
 
 void update_GPS_raw_data() {
