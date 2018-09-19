@@ -1,3 +1,6 @@
+#define DEBUG 1
+#define LOCAL_STORAGE 1
+
 #include <Wire.h>
 #include "AS726X.h"
 #include "SparkFun_I2C_GPS_Arduino_Library.h"
@@ -9,7 +12,10 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+
+#ifdef LOCAL_STORAGE
 #include <SD.h>
+#endif
 
 #define CCS811_ADDR 0x5B //Default I2C Address
 #define NUMBER_OF_SENSORS 3
@@ -27,7 +33,10 @@ BME280 myBME280;
 MLX90393 mlx;
 MLX90393::txyz data; //Create a structure, called data, of four floats (t, x, y, and z)
 RF24 radio(7, 8); // CE, CSN
+
+#ifdef LOCAL_STORAGE
 File myFile;
+#endif
 
 String combine_data_packet;
 const byte address[6] = "00001";
@@ -35,14 +44,24 @@ const byte address[6] = "00001";
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+#ifdef DEBUG
   Serial.println("Initialising the program...");
+#endif
+
   Wire.begin();
   enableMuxPort(GPSMuxPort);
   if (myI2CGPS.begin() == false) {//Checks for succesful initialization of GPS
+#ifdef DEBUG
     Serial.println("Module failed to respond. Please check wiring.");
+#endif
+
     while (1); //Freeze!
   }
+
+#ifdef DEBUG
   Serial.println("GPS module found!");
+#endif
+
   disableMuxPort(GPSMuxPort);
 
   enableMuxPort(SpectralSensor1MuxPort);
@@ -65,10 +84,16 @@ void setup() {
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
+#ifdef LOCAL_STORAGE
+  open_sd();
+  if (myFile) {
+    myFile.println(header_CSV());
+  }
+#endif
 
-  open_test_sd();
-
-  Serial.println("The program is successfully initialised...");
+#ifdef DEBUG
+    Serial.println("The program is successfully initialised...");
+#endif
 }
 
 void loop() {
@@ -77,23 +102,26 @@ void loop() {
   for (byte x = 1 ; x < 3 ; x++) {
     enableMuxPort(x); //Tell mux to connect to this port, and this port only
     SpectralSensor.takeMeasurements();
+#ifdef DEBUG
     SpectralSensor.printMeasurements();
+#endif
     disableMuxPort(x);
   }
 
   enableMuxPort(GPSMuxPort);
-  while (myI2CGPS.available()){ //available() returns the number of new bytes available from the GPS module
+  while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
     gps.encode(myI2CGPS.read()); //Feed the GPS parser
   }
 
-  if (gps.time.isUpdated()){ //Check to see if new GPS info is available
+  if (gps.time.isUpdated()) { //Check to see if new GPS info is available
+#ifdef DEBUG
     displayInfo();
+#endif
   }
+  //  update_GPS_raw_data();
   disableMuxPort(GPSMuxPort); //Tell mux to disconnect from this port
 
-//  update_GPS_raw_data();
-
-
+#ifdef DEBUG
   enableMuxPort(CCS_BME_MuxPort);
   update_CCS_BME();
   disableMuxPort(CCS_BME_MuxPort);
@@ -101,21 +129,37 @@ void loop() {
   enableMuxPort(MLXMuxPort);
   update_mlx();
   disableMuxPort(MLXMuxPort);
+#endif
+
   combine_data_packet = combine_output();
   const char text[] = "This is " ;
-//  radio.write(&text, sizeof(text));
+  //  radio.write(&text, sizeof(text));
+#ifdef DEBUG
   Serial.println(combine_data_packet);
+#endif
+
   radio.write(&combine_data_packet, sizeof(combine_data_packet));
 
-  delay(500); //Wait for next reading
-
-
-
+#ifdef LOCAL_STORAGE
+  if (myFile) {
+    myFile.println(combine_data_packet);
+    delay(500); //Wait for next reading
+  }
+#endif
 }
 
-String combine_output(){
+#ifdef LOCAL_STORAGE
+String header_CSV() {
+  String current_string;
+  current_string = "MONTH/DATE/YEAR, Latitude, Longitude, SpectralSensor 1, SpectralSensor 2, Temperature, Magnetometer";
+  return current_string;
+}
+#endif
+
+String combine_output() {
   String current_string;
   current_string = "STR"; //start
+  enableMuxPort(GPSMuxPort);
   current_string += gps.date.month();
   current_string += "/";
   current_string += gps.date.day();
@@ -125,14 +169,34 @@ String combine_output(){
   current_string += gps.location.lat(); //GPS latitude
   current_string += ", ";
   current_string += gps.location.lng(); //GPS longitude
+  disableMuxPort(GPSMuxPort);
   current_string += ", ";
-  
+  enableMuxPort(SpectralSensor1MuxPort);
+  current_string += SpectralSensor.getR();
+  disableMuxPort(SpectralSensor1MuxPort);
+  current_string += ", ";
+  enableMuxPort(SpectralSensor2MuxPort);
+  current_string += SpectralSensor.getR();
+  disableMuxPort(SpectralSensor2MuxPort);
+  current_string += ", ";
+  enableMuxPort(CCS_BME_MuxPort);
+  current_string += myBME280.readTempC();
+  disableMuxPort(CCS_BME_MuxPort);
+  current_string += ", ";
+  enableMuxPort(MLXMuxPort);
+  current_string += data.x;
+  current_string += ", ";
+  current_string += data.y;
+  current_string += ", ";
+  current_string += data.z;
+  disableMuxPort(MLXMuxPort);
   current_string += "END"; //end
   return current_string;
 }
 
 void update_GPS_raw_data() {
   enableMuxPort(GPSMuxPort);
+#ifdef DEBUG
   while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
 
     byte incoming = myI2CGPS.read(); //Read the latest byte from Qwiic GPS
@@ -140,10 +204,13 @@ void update_GPS_raw_data() {
     if (incoming == true) Serial.println(); //Break the sentences onto new lines
     Serial.write(incoming); //Print this character
   }
+
   Serial.println("");
   Serial.println("");
+#endif
   disableMuxPort(GPSMuxPort);
 }
+#ifdef DEBUG
 void displayInfo()
 {
   //We have new GPS data to deal with!
@@ -188,20 +255,26 @@ void displayInfo()
     Serial.println(F("Location not yet valid"));
   }
 }
+#endif
 
 void CCS_BME_setup() {
+#ifdef DEBUG
   Serial.println("Apply BME280 data to CCS811 for compensation.");
-
+#endif
   //This begins the CCS811 sensor and prints error status of .begin()
   CCS811Core::status returnCode = myCCS811.begin();
   if (returnCode != CCS811Core::SENSOR_SUCCESS)
   {
+#ifdef DEBUG
     Serial.println("Problem with CCS811");
     printDriverError(returnCode);
+#endif
   }
   else
   {
+#ifdef DEBUG
     Serial.println("CCS811 online");
+#endif
   }
 
   //Initialize BME280
@@ -220,16 +293,21 @@ void CCS_BME_setup() {
   byte id = myBME280.begin(); //Returns ID of 0x60 if successful
   if (id != 0x60)
   {
+#ifdef DEBUG
     Serial.println("Problem with BME280");
+#endif
   }
   else
   {
+#ifdef DEBUG
     Serial.println("BME280 online");
+#endif
   }
 }
 
 void printData()
 {
+#ifdef DEBUG
   Serial.print(" CO2[");
   Serial.print(myCCS811.getCO2());
   Serial.print("]ppm");
@@ -267,8 +345,9 @@ void printData()
   Serial.print("]%");
 
   Serial.println();
+#endif
 }
-
+#ifdef DEBUG
 void printDriverError( CCS811Core::status errorCode )
 {
   switch ( errorCode )
@@ -292,23 +371,28 @@ void printDriverError( CCS811Core::status errorCode )
       Serial.print("Unspecified error.");
   }
 }
+#endif
 
 void update_CCS_BME() {
   if (myCCS811.dataAvailable()) //Check to see if CCS811 has new data (it's the slowest sensor)
   {
     myCCS811.readAlgorithmResults(); //Read latest from CCS811 and update tVOC and CO2 variables
     //getWeather(); //Get latest humidity/pressure/temp data from BME280
+#ifdef DEBUG
     printData(); //Pretty print all the data
+#endif
   }
   else if (myCCS811.checkForStatusError()) //Check to see if CCS811 has thrown an error
   {
+#ifdef DEBUG
     Serial.println(myCCS811.getErrorRegister()); //Prints whatever CSS811 error flags are detected
+#endif
   }
 }
 
-void update_mlx(){
+void update_mlx() {
   mlx.readData(data); //Read the values from the sensor
-
+#ifdef DEBUG
   Serial.print("magX[");
   Serial.print(data.x);
   Serial.print("] magY[");
@@ -320,54 +404,58 @@ void update_mlx(){
   Serial.print("]");
 
   Serial.println();
+#endif
 }
 
-void open_test_sd(){
-    // Open serial communications and wait for port to open:
+#ifdef LOCAL_STORAGE
+void open_sd() {
+  // Open serial communications and wait for port to open:
+#ifdef DEBUG
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  
+
   Serial.print("Initializing SD card...");
-  
+#endif
   if (!SD.begin(4)) {
+#ifdef DEBUG
     Serial.println("initialization failed!");
+#endif
     while (1);
   }
-  
+#ifdef DEBUG
   Serial.println("initialization done.");
-
+#endif
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  myFile = SD.open("test.txt", FILE_WRITE);
-  
-  // if the file opened okay, write to it:
-  if (myFile) {
-    Serial.print("Writing to test.txt...");
-    myFile.println("testing 1, 2, 3.");
-    // close the file:
-    myFile.close();
-    Serial.println("done.");
-  } else {
-    // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
-  }
-/*
-  // re-open the file for reading:
-  myFile = SD.open("test.txt");
-  if (myFile) {
-    Serial.println("test.txt:");
-
-    // read from the file until there's nothing else in it:
-    while (myFile.available()) {
-      Serial.write(myFile.read());
+  myFile = SD.open("DIP.txt", FILE_WRITE);
+  /*
+    // if the file opened okay, write to it:
+    if (myFile) {
+      Serial.print("Writing to DIP.txt...");
+      myFile.println("testing 1, 2, 3.");
+      // close the file:
+      myFile.close();
+      Serial.println("done.");
+    } else {
+      // if the file didn't open, print an error:
+      Serial.println("error opening test.txt");
     }
-    // close the file:
-    myFile.close();
-  } else {
-    // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
-  }
-*/
-}
+      // re-open the file for reading:
+      myFile = SD.open("test.txt");
+      if (myFile) {
+        Serial.println("test.txt:");
 
+        // read from the file until there's nothing else in it:
+        while (myFile.available()) {
+          Serial.write(myFile.read());
+        }
+        // close the file:
+        myFile.close();
+      } else {
+        // if the file didn't open, print an error:
+        Serial.println("error opening test.txt");
+      }
+  */
+}
+#endif
