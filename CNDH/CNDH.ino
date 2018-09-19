@@ -1,5 +1,5 @@
 #define DEBUG 1
-#define LOCAL_STORAGE 1
+//#define LOCAL_STORAGE 1
 
 #include <Wire.h>
 #include "AS726X.h"
@@ -40,9 +40,12 @@ File myFile;
 
 String combine_data_packet;
 const byte address[6] = "00001";
+char buff[32];
+int i= 0;
 
 void setup() {
   // put your setup code here, to run once:
+  pinMode(2,OUTPUT);
   Serial.begin(115200);
 #ifdef DEBUG
   Serial.println("Initialising the program...");
@@ -84,6 +87,7 @@ void setup() {
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
+
 #ifdef LOCAL_STORAGE
   open_sd();
   if (myFile) {
@@ -92,13 +96,25 @@ void setup() {
 #endif
 
 #ifdef DEBUG
-    Serial.println("The program is successfully initialised...");
+  Serial.println("The program is successfully initialised...");
 #endif
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+  i++;
+  digitalWrite(2, HIGH);
+  enableMuxPort(GPSMuxPort);
+  while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
+    gps.encode(myI2CGPS.read()); //Feed the GPS parser
+  }
+  if (gps.time.isUpdated()) { //Check to see if new GPS info is available
+#ifdef DEBUG
+    displayInfo();
+#endif
+  }
+  disableMuxPort(GPSMuxPort); //Tell mux to disconnect from this port
+  //  update_GPS_raw_data();
   for (byte x = 1 ; x < 3 ; x++) {
     enableMuxPort(x); //Tell mux to connect to this port, and this port only
     SpectralSensor.takeMeasurements();
@@ -107,19 +123,6 @@ void loop() {
 #endif
     disableMuxPort(x);
   }
-
-  enableMuxPort(GPSMuxPort);
-  while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
-    gps.encode(myI2CGPS.read()); //Feed the GPS parser
-  }
-
-  if (gps.time.isUpdated()) { //Check to see if new GPS info is available
-#ifdef DEBUG
-    displayInfo();
-#endif
-  }
-  //  update_GPS_raw_data();
-  disableMuxPort(GPSMuxPort); //Tell mux to disconnect from this port
 
 #ifdef DEBUG
   enableMuxPort(CCS_BME_MuxPort);
@@ -132,20 +135,26 @@ void loop() {
 #endif
 
   combine_data_packet = combine_output();
-  const char text[] = "This is " ;
-  //  radio.write(&text, sizeof(text));
+
 #ifdef DEBUG
+  Serial.print(i);
+  Serial.print("x    ");
   Serial.println(combine_data_packet);
 #endif
 
-  radio.write(&combine_data_packet, sizeof(combine_data_packet));
+    combine_data_packet.toCharArray(buff, 32);
+    radio.write(&buff, sizeof(buff));
+
+  //  const char text[] = "Hello World";
+  //  radio.write(&text, sizeof(text));
 
 #ifdef LOCAL_STORAGE
   if (myFile) {
     myFile.println(combine_data_packet);
-    delay(500); //Wait for next reading
   }
 #endif
+digitalWrite(2, LOW);
+  delay(2000); //Wait for next reading
 }
 
 #ifdef LOCAL_STORAGE
@@ -158,7 +167,7 @@ String header_CSV() {
 
 String combine_output() {
   String current_string;
-  current_string = "STR"; //start
+  current_string = "STR, "; //start
   enableMuxPort(GPSMuxPort);
   current_string += gps.date.month();
   current_string += "/";
@@ -170,18 +179,22 @@ String combine_output() {
   current_string += ", ";
   current_string += gps.location.lng(); //GPS longitude
   disableMuxPort(GPSMuxPort);
+  delay(10);
   current_string += ", ";
   enableMuxPort(SpectralSensor1MuxPort);
   current_string += SpectralSensor.getR();
   disableMuxPort(SpectralSensor1MuxPort);
+  delay(10);
   current_string += ", ";
   enableMuxPort(SpectralSensor2MuxPort);
   current_string += SpectralSensor.getR();
   disableMuxPort(SpectralSensor2MuxPort);
+  delay(10);
   current_string += ", ";
   enableMuxPort(CCS_BME_MuxPort);
   current_string += myBME280.readTempC();
   disableMuxPort(CCS_BME_MuxPort);
+  delay(10);
   current_string += ", ";
   enableMuxPort(MLXMuxPort);
   current_string += data.x;
@@ -190,6 +203,7 @@ String combine_output() {
   current_string += ", ";
   current_string += data.z;
   disableMuxPort(MLXMuxPort);
+  delay(10);
   current_string += "END"; //end
   return current_string;
 }
