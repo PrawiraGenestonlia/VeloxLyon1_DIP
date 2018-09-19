@@ -1,4 +1,4 @@
-//#define DEBUG 1
+#define DEBUG 1
 //#define LOCAL_STORAGE 1
 
 #include <Wire.h>
@@ -87,6 +87,8 @@ void setup() {
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
+//  const char header[]="MONTH/DATE/YEAR,Latitude,Longitude,SpectralSensor 1,SpectralSensor 2,Temperature,Magnetometer";
+//  radio.write(&header,sizeof(header));
 
 #ifdef LOCAL_STORAGE
   open_sd();
@@ -159,9 +161,9 @@ digitalWrite(2, LOW);
 
 #ifdef LOCAL_STORAGE
 String header_CSV() {
-  String current_string;
-  current_string = "MONTH/DATE/YEAR, Latitude, Longitude, SpectralSensor 1, SpectralSensor 2, Temperature, Magnetometer";
-  return current_string;
+  String this_string;
+  this_string = "MONTH/DATE/YEAR,Latitude,Longitude,SpectralSensor 1,SpectralSensor 2,Temperature,Magnetometer";
+  return this_string;
 }
 #endif
 
