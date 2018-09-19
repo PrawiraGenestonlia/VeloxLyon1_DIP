@@ -1,4 +1,4 @@
-#define DEBUG 1
+//#define DEBUG 1
 //#define LOCAL_STORAGE 1
 
 #include <Wire.h>
@@ -17,6 +17,7 @@
 #include <SD.h>
 #endif
 
+#define logging_frequency 5
 #define CCS811_ADDR 0x5B //Default I2C Address
 #define NUMBER_OF_SENSORS 3
 #define GPSMuxPort 3
@@ -38,10 +39,10 @@ RF24 radio(7, 8); // CE, CSN
 File myFile;
 #endif
 
-String combine_data_packet;
 const byte address[6] = "00001";
 char buff[32];
 int i= 0;
+String current_string;
 
 void setup() {
   // put your setup code here, to run once:
@@ -57,7 +58,6 @@ void setup() {
 #ifdef DEBUG
     Serial.println("Module failed to respond. Please check wiring.");
 #endif
-
     while (1); //Freeze!
   }
 
@@ -134,15 +134,15 @@ void loop() {
   disableMuxPort(MLXMuxPort);
 #endif
 
-  combine_data_packet = combine_output();
+  update_output();
 
 #ifdef DEBUG
   Serial.print(i);
   Serial.print("x    ");
-  Serial.println(combine_data_packet);
+  Serial.println(current_string);
 #endif
 
-    combine_data_packet.toCharArray(buff, 32);
+    current_string.toCharArray(buff, 32);
     radio.write(&buff, sizeof(buff));
 
   //  const char text[] = "Hello World";
@@ -154,7 +154,7 @@ void loop() {
   }
 #endif
 digitalWrite(2, LOW);
-  delay(2000); //Wait for next reading
+  delay(1000/logging_frequency); //Wait for next reading
 }
 
 #ifdef LOCAL_STORAGE
@@ -165,47 +165,50 @@ String header_CSV() {
 }
 #endif
 
-String combine_output() {
-  String current_string;
-  current_string = "STR, "; //start
+String update_output() {
+  current_string = "STR,"; //start
   enableMuxPort(GPSMuxPort);
+  gps.encode(myI2CGPS.read());
   current_string += gps.date.month();
   current_string += "/";
   current_string += gps.date.day();
   current_string += "/";
   current_string += gps.date.year();
-  current_string += ", ";
+  current_string += ",";
   current_string += gps.location.lat(); //GPS latitude
-  current_string += ", ";
+  current_string += ",";
   current_string += gps.location.lng(); //GPS longitude
   disableMuxPort(GPSMuxPort);
   delay(10);
-  current_string += ", ";
+  current_string += ",";
   enableMuxPort(SpectralSensor1MuxPort);
+  SpectralSensor.takeMeasurements();
   current_string += SpectralSensor.getR();
   disableMuxPort(SpectralSensor1MuxPort);
   delay(10);
-  current_string += ", ";
+  current_string += ",";
   enableMuxPort(SpectralSensor2MuxPort);
+  SpectralSensor.takeMeasurements();
   current_string += SpectralSensor.getR();
   disableMuxPort(SpectralSensor2MuxPort);
   delay(10);
-  current_string += ", ";
+  current_string += ",";
   enableMuxPort(CCS_BME_MuxPort);
+  myCCS811.readAlgorithmResults(); //Read latest from CCS811 and update tVOC and CO2 variables
   current_string += myBME280.readTempC();
   disableMuxPort(CCS_BME_MuxPort);
   delay(10);
-  current_string += ", ";
+  current_string += ",";
   enableMuxPort(MLXMuxPort);
+  mlx.readData(data);
   current_string += data.x;
-  current_string += ", ";
+  current_string += ",";
   current_string += data.y;
-  current_string += ", ";
+  current_string += ",";
   current_string += data.z;
   disableMuxPort(MLXMuxPort);
   delay(10);
   current_string += "END"; //end
-  return current_string;
 }
 
 void update_GPS_raw_data() {
@@ -391,7 +394,7 @@ void update_CCS_BME() {
   if (myCCS811.dataAvailable()) //Check to see if CCS811 has new data (it's the slowest sensor)
   {
     myCCS811.readAlgorithmResults(); //Read latest from CCS811 and update tVOC and CO2 variables
-    //getWeather(); //Get latest humidity/pressure/temp data from BME280
+//    getWeather(); //Get latest humidity/pressure/temp data from BME280
 #ifdef DEBUG
     printData(); //Pretty print all the data
 #endif
