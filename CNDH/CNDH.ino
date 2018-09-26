@@ -1,4 +1,4 @@
-#define DEBUG 1
+#define DEBUG  1
 //#define LOCAL_STORAGE 1
 
 #include <Wire.h>
@@ -25,6 +25,7 @@
 #define SpectralSensor2MuxPort 2
 #define CCS_BME_MuxPort 4
 #define MLXMuxPort 5
+#define LEN_RAD 32
 
 TinyGPSPlus gps; //Declare gps object
 AS726X SpectralSensor; //declare
@@ -40,13 +41,18 @@ File myFile;
 #endif
 
 const byte address[6] = "00001";
-char buff[32];
+char buff[LEN_RAD];
+char buff2[LEN_RAD];
+
 int i= 0;
-String current_string;
+String current_string="";
+String current_string2="";
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(2,OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(8, OUTPUT);
   Serial.begin(115200);
 #ifdef DEBUG
   Serial.println("Initialising the program...");
@@ -135,24 +141,36 @@ void loop() {
   update_mlx();
   disableMuxPort(MLXMuxPort);
 #endif
-
-  update_output();
+  digitalWrite(4,LOW);
+  digitalWrite(8,HIGH);
+//  update_output();
+  update_output_str();
+  update_output_end();
 
 #ifdef DEBUG
   Serial.print(i);
   Serial.print("x    ");
-  Serial.println(current_string);
+  Serial.print(current_string);
+  Serial.println(current_string2);
+  
 #endif
-
-    current_string.toCharArray(buff, 32);
+  digitalWrite(4,HIGH);
+  digitalWrite(8,LOW);
+    current_string.toCharArray(buff, LEN_RAD);
     radio.write(&buff, sizeof(buff));
+
+    delay(50);
+    
+    current_string2.toCharArray(buff2, LEN_RAD);
+    radio.write(&buff2, sizeof(buff2));
 
   //  const char text[] = "Hello World";
   //  radio.write(&text, sizeof(text));
 
 #ifdef LOCAL_STORAGE
   if (myFile) {
-    myFile.println(combine_data_packet);
+    myFile.print(current_string);
+    myFile.println(current_string2);
   }
 #endif
 digitalWrite(2, LOW);
@@ -167,7 +185,53 @@ String header_CSV() {
 }
 #endif
 
-String update_output() {
+//String update_output() {
+//  current_string = "STR,"; //start
+//  enableMuxPort(GPSMuxPort);
+//  gps.encode(myI2CGPS.read());
+//  current_string += gps.date.month();
+//  current_string += "/";
+//  current_string += gps.date.day();
+//  current_string += "/";
+//  current_string += gps.date.year();
+//  current_string += ",";
+//  current_string += gps.location.lat(); //GPS latitude
+//  current_string += ",";
+//  current_string += gps.location.lng(); //GPS longitude
+//  disableMuxPort(GPSMuxPort);
+//  delay(10);
+//  current_string += ",";
+//  enableMuxPort(SpectralSensor1MuxPort);
+//  SpectralSensor.takeMeasurements();
+//  current_string += SpectralSensor.getR();
+//  disableMuxPort(SpectralSensor1MuxPort);
+//  delay(10);
+//  current_string += ",";
+//  enableMuxPort(SpectralSensor2MuxPort);
+//  SpectralSensor.takeMeasurements();
+//  current_string += SpectralSensor.getR();
+//  disableMuxPort(SpectralSensor2MuxPort);
+//  delay(10);
+//  current_string += ",";
+//  enableMuxPort(CCS_BME_MuxPort);
+//  myCCS811.readAlgorithmResults(); //Read latest from CCS811 and update tVOC and CO2 variables
+//  current_string += myBME280.readTempC();
+//  disableMuxPort(CCS_BME_MuxPort);
+//  delay(10);
+//  current_string += ",";
+//  enableMuxPort(MLXMuxPort);
+//  mlx.readData(data);
+//  current_string += data.x;
+//  current_string += ",";
+//  current_string += data.y;
+//  current_string += ",";
+//  current_string += data.z;
+//  disableMuxPort(MLXMuxPort);
+//  delay(10);
+//  current_string += "END"; //end
+//}
+
+String update_output_str() {
   current_string = "STR,"; //start
   enableMuxPort(GPSMuxPort);
   gps.encode(myI2CGPS.read());
@@ -183,34 +247,37 @@ String update_output() {
   disableMuxPort(GPSMuxPort);
   delay(10);
   current_string += ",";
+}
+
+String update_output_end(){
   enableMuxPort(SpectralSensor1MuxPort);
   SpectralSensor.takeMeasurements();
-  current_string += SpectralSensor.getR();
+  current_string2 += SpectralSensor.getR();
   disableMuxPort(SpectralSensor1MuxPort);
   delay(10);
-  current_string += ",";
+  current_string2 += ",";
   enableMuxPort(SpectralSensor2MuxPort);
   SpectralSensor.takeMeasurements();
-  current_string += SpectralSensor.getR();
+  current_string2 += SpectralSensor.getR();
   disableMuxPort(SpectralSensor2MuxPort);
   delay(10);
-  current_string += ",";
+  current_string2 += ",";
   enableMuxPort(CCS_BME_MuxPort);
   myCCS811.readAlgorithmResults(); //Read latest from CCS811 and update tVOC and CO2 variables
-  current_string += myBME280.readTempC();
+  current_string2 += myBME280.readTempC();
   disableMuxPort(CCS_BME_MuxPort);
   delay(10);
-  current_string += ",";
+  current_string2 += ",";
   enableMuxPort(MLXMuxPort);
   mlx.readData(data);
-  current_string += data.x;
-  current_string += ",";
-  current_string += data.y;
-  current_string += ",";
-  current_string += data.z;
+  current_string2 += data.x;
+  current_string2 += ",";
+  current_string2 += data.y;
+  current_string2 += ",";
+  current_string2 += data.z;
   disableMuxPort(MLXMuxPort);
   delay(10);
-  current_string += "END"; //end
+  current_string2 += "END"; //end  
 }
 
 void update_GPS_raw_data() {
