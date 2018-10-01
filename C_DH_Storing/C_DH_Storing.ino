@@ -1,4 +1,3 @@
-
 #include <Wire.h>
 #include "AS726X.h"
 #include "SparkFun_I2C_GPS_Arduino_Library.h"
