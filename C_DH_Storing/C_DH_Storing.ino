@@ -35,23 +35,23 @@ RF24 radio(7, 8); // CE, CSN
 const byte address[6] = "00001";
 char buff[32];
 
-int i= 0;
-String current_string="";
+int i = 0;
+String current_string = "";
 
 
 void setup() {
   // put your setup code here, to run once:
-//    pinMode(PIN_SPI_MOSI, OUTPUT);
-//  pinMode(PIN_SPI_MISO, INPUT);
-//  pinMode(PIN_SPI_CLK, OUTPUT);
-//  //Disable SPI devices
-//  pinMode(PIN_SD_CS, OUTPUT);
-//  digitalWrite(PIN_SD_CS, HIGH);
-//  
-//  #if PIN_OTHER_DEVICE_CS > 0
-//  pinMode(PIN_OTHER_DEVICE_CS, OUTPUT);
-//  digitalWrite(PIN_OTHER_DEVICE_CS, HIGH);
-//  #endif //PIN_OTHER_DEVICE_CS > 0
+  //    pinMode(PIN_SPI_MOSI, OUTPUT);
+  //  pinMode(PIN_SPI_MISO, INPUT);
+  //  pinMode(PIN_SPI_CLK, OUTPUT);
+  //  //Disable SPI devices
+  //  pinMode(PIN_SD_CS, OUTPUT);
+  //  digitalWrite(PIN_SD_CS, HIGH);
+  //
+  //  #if PIN_OTHER_DEVICE_CS > 0
+  //  pinMode(PIN_OTHER_DEVICE_CS, OUTPUT);
+  //  digitalWrite(PIN_OTHER_DEVICE_CS, HIGH);
+  //  #endif //PIN_OTHER_DEVICE_CS > 0
 
   Serial.begin(115200);
 
@@ -83,18 +83,18 @@ void setup() {
   radio.stopListening();
 
 
-  
+
 }
 
 void loop() {
 
   update_output();
-  
+
   Serial.print(i);
   Serial.print("x    ");
   Serial.println(current_string);
 
-  delay(1000/logging_frequency); //Wait for next reading
+  delay(1000 / logging_frequency); //Wait for next reading
   i++;
 
   current_string.toCharArray(buff, 32);
@@ -104,7 +104,7 @@ void loop() {
 String update_output() {
   current_string = "STR,"; //start
   enableMuxPort(GPSMuxPort);
-while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
+  while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
     gps.encode(myI2CGPS.read()); //Feed the GPS parser
   }
   current_string += gps.date.month();
