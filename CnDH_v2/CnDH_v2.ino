@@ -3,7 +3,7 @@
 #include "SparkFun_I2C_GPS_Arduino_Library.h"
 #include <QwiicMux.h>
 #include <TinyGPS++.h>
-//#include <MLX90393.h>
+#include <MLX90393.h>
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -28,8 +28,8 @@ File myFile;
 //MLX90393::txyz data; //Create a structure, called data, of four floats (t, x, y, and z)
 //RF24 radio(7, 8); // CE, CSN
 
-const byte address[6] = "00001";
-char buff[32];
+//const byte address[6] = "00001";
+//char buff[32];
 
 int i = 0;
 String current_string = "";
@@ -61,6 +61,7 @@ void setup() {
   }
   Serial.println("initialization done.");
   myFile = SD.open("10102018.txt", FILE_WRITE);
+
   //  enableMuxPort(MLXMuxPort);
   //  mlx.begin();
   //  disableMuxPort(MLXMuxPort);
@@ -76,7 +77,6 @@ void loop() {
   update_output();
   Serial.print(current_string);
   delay(1000 / logging_frequency); //Wait for next reading
-
 
   sd_write(current_string);
   sd_read();
@@ -95,7 +95,7 @@ void sd_write(String info) {
     Serial.println("done.");
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
+    Serial.println("error opening..");
   }
   digitalWrite(A1, LOW);
 }
@@ -103,7 +103,7 @@ void sd_write(String info) {
 void sd_read() {
   myFile = SD.open("10102018.txt");
   if (myFile) {
-    Serial.println("test.txt:");
+    Serial.println("10102018.txt:");
 
     // read from the file until there's nothing else in it:
     while (myFile.available()) {
@@ -113,7 +113,7 @@ void sd_read() {
     myFile.close();
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
+    Serial.println("error opening..");
   }
 
 }
