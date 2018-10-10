@@ -98,7 +98,24 @@ void loop() {
     // if the file didn't open, print an error:
     Serial.println("error opening test.txt");
   }
+  
   digitalWrite(A1,LOW);
+
+  myFile = SD.open("10102018.txt");
+  if (myFile) {
+    Serial.println("test.txt:");
+
+    // read from the file until there's nothing else in it:
+    while (myFile.available()) {
+      Serial.write(myFile.read());
+    }
+    // close the file:
+    myFile.close();
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
+  
 }
 
 void update_output() {
