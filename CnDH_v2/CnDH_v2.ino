@@ -3,7 +3,7 @@
 #include "SparkFun_I2C_GPS_Arduino_Library.h"
 #include <QwiicMux.h>
 #include <TinyGPS++.h>
-#include <MLX90393.h>
+//#include <MLX90393.h>
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -17,12 +17,12 @@
 #define SpectralSensor2MuxPort 2
 #define MLXMuxPort 5
 #define LEN_RAD 32
+#define SD_CS_PIN 10
 
 TinyGPSPlus gps; //Declare gps object
 AS726X SpectralSensor; //declare
 I2CGPS myI2CGPS; //Hook object to the library
 SdFat SD;
-#define SD_CS_PIN 10
 File myFile;
 //MLX90393 mlx;
 //MLX90393::txyz data; //Create a structure, called data, of four floats (t, x, y, and z)
@@ -54,17 +54,12 @@ void setup() {
   SpectralSensor.begin();
   disableMuxPort(SpectralSensor2MuxPort);
 
-
   Serial.print("Initializing SD card...");
-
   if (!SD.begin(SD_CS_PIN)) {
     Serial.println("initialization failed!");
     return;
   }
   Serial.println("initialization done.");
-
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
   myFile = SD.open("10102018.txt", FILE_WRITE);
   //  enableMuxPort(MLXMuxPort);
   //  mlx.begin();
@@ -74,9 +69,6 @@ void setup() {
   //  radio.openWritingPipe(address);
   //  radio.setPALevel(RF24_PA_MIN);
   //  radio.stopListening();
-
-
-
 }
 
 void loop() {
@@ -85,7 +77,7 @@ void loop() {
   Serial.print(current_string);
   delay(1000 / logging_frequency); //Wait for next reading
 
-  myFile = SD.open("10102018.txt", FILE_WRITE);
+
   sd_write(current_string);
   sd_read();
 
@@ -93,6 +85,7 @@ void loop() {
 }
 
 void sd_write(String info) {
+  myFile = SD.open("10102018.txt", FILE_WRITE);
   if (myFile) {
     digitalWrite(A1, HIGH);
     Serial.print("Writing to 10102018.txt...");
@@ -104,10 +97,9 @@ void sd_write(String info) {
     // if the file didn't open, print an error:
     Serial.println("error opening test.txt");
   }
-
   digitalWrite(A1, LOW);
-
 }
+
 void sd_read() {
   myFile = SD.open("10102018.txt");
   if (myFile) {
