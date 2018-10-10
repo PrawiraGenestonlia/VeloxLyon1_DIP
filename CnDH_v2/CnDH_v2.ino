@@ -9,7 +9,7 @@
 #include <RF24.h>
 #include <SdFat.h>
 
-#define logging_frequency 5
+#define logging_frequency 2
 #define CCS811_ADDR 0x5B //Default I2C Address
 #define NUMBER_OF_SENSORS 3
 #define GPSMuxPort 3
@@ -36,7 +36,7 @@ String current_string = "";
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(A1,OUTPUT);
+  pinMode(A1, OUTPUT);
   Serial.begin(115200);
   Wire.begin();
   enableMuxPort(GPSMuxPort);
@@ -84,13 +84,19 @@ void loop() {
   update_output();
   Serial.print(current_string);
   delay(1000 / logging_frequency); //Wait for next reading
-  i++;
-  
+
   myFile = SD.open("10102018.txt", FILE_WRITE);
+  sd_write(current_string);
+  sd_read();
+
+
+}
+
+void sd_write(String info) {
   if (myFile) {
-    digitalWrite(A1,HIGH);
+    digitalWrite(A1, HIGH);
     Serial.print("Writing to 10102018.txt...");
-    myFile.print(current_string);
+    myFile.print(info);
     // close the file:
     myFile.close();
     Serial.println("done.");
@@ -98,9 +104,11 @@ void loop() {
     // if the file didn't open, print an error:
     Serial.println("error opening test.txt");
   }
-  
-  digitalWrite(A1,LOW);
 
+  digitalWrite(A1, LOW);
+
+}
+void sd_read() {
   myFile = SD.open("10102018.txt");
   if (myFile) {
     Serial.println("test.txt:");
@@ -115,9 +123,8 @@ void loop() {
     // if the file didn't open, print an error:
     Serial.println("error opening test.txt");
   }
-  
-}
 
+}
 void update_output() {
   current_string = "STR;"; //start
   enableMuxPort(GPSMuxPort);
@@ -149,18 +156,18 @@ void update_output() {
   current_string += SpectralSensor.getCalibratedR();
   disableMuxPort(SpectralSensor2MuxPort);
   delay(50);
-//  current_string += ";";
-//  enableMuxPort(MLXMuxPort);
-//  mlx.readData(data);
-//  current_string += data.x;
-//  current_string += ";";
-//  current_string += data.y;
-//  current_string += ";";
-//  current_string += data.z;
-//  current_string += ";";
-//  current_string += data.t;
-//  disableMuxPort(MLXMuxPort);
-//  delay(10);
+  //  current_string += ";";
+  //  enableMuxPort(MLXMuxPort);
+  //  mlx.readData(data);
+  //  current_string += data.x;
+  //  current_string += ";";
+  //  current_string += data.y;
+  //  current_string += ";";
+  //  current_string += data.z;
+  //  current_string += ";";
+  //  current_string += data.t;
+  //  disableMuxPort(MLXMuxPort);
+  //  delay(10);
   current_string += "; END \n"; //end
   delay(50);
 }
