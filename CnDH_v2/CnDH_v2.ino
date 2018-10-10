@@ -26,10 +26,10 @@ SdFat SD;
 File myFile;
 //MLX90393 mlx;
 //MLX90393::txyz data; //Create a structure, called data, of four floats (t, x, y, and z)
-//RF24 radio(7, 8); // CE, CSN
+RF24 radio(7, 8); // CE, CSN
 
-//const byte address[6] = "00001";
-//char buff[32];
+const byte address[6] = "00001";
+char buff[32];
 
 int i = 0;
 String current_string = "";
@@ -54,33 +54,36 @@ void setup() {
   SpectralSensor.begin();
   disableMuxPort(SpectralSensor2MuxPort);
 
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(SD_CS_PIN)) {
-    Serial.println("initialization failed!");
-    return;
-  }
-  Serial.println("initialization done.");
-  myFile = SD.open("10102018.txt", FILE_WRITE);
+    Serial.print("Initializing SD card...");
+    if (!SD.begin(SD_CS_PIN)) {
+      Serial.println("initialization failed!");
+      return;
+    }
+    Serial.println("initialization done.");
+    myFile = SD.open("10102018.txt", FILE_WRITE);
 
   //  enableMuxPort(MLXMuxPort);
   //  mlx.begin();
   //  disableMuxPort(MLXMuxPort);
-
-  //  radio.begin();
-  //  radio.openWritingPipe(address);
-  //  radio.setPALevel(RF24_PA_MIN);
-  //  radio.stopListening();
+//
+//  radio.begin();
+//  radio.openWritingPipe(address);
+//  radio.setPALevel(RF24_PA_MIN);
+//  radio.stopListening();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  update_output();
+    update_output();
   Serial.print(current_string);
   delay(1000 / logging_frequency); //Wait for next reading
 
-  sd_write(current_string);
-  sd_read();
-
+    sd_write(current_string);
+    sd_read();
+//  digitalWrite(A1, HIGH);
+//  current_string.toCharArray(buff, 32);
+//  radio.write(&buff, sizeof(buff));
+//  digitalWrite(A1, LOW);
 
 }
 
@@ -115,8 +118,8 @@ void sd_read() {
     // if the file didn't open, print an error:
     Serial.println("error opening..");
   }
-
 }
+
 void update_output() {
   current_string = "STR;"; //start
   enableMuxPort(GPSMuxPort);
