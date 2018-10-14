@@ -75,10 +75,10 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   update_output();
-  Serial.print(current_string);
+  Serial.println(current_string);
   delay(1000 / logging_frequency); //Wait for next reading
 
-//  sd_write("WOLRD! \n");
+  sd_write(current_string);
 //  sd_read();
 
   //  digitalWrite(A1, HIGH);
@@ -93,7 +93,7 @@ void sd_write(String info) {
   if (myFile) {
     digitalWrite(A1, HIGH);
     Serial.print("Writing to 10102018.txt...");
-    myFile.print(info);
+    myFile.println(info);
     // close the file:
     myFile.close();
     Serial.println("done.");
@@ -164,6 +164,6 @@ void update_output() {
   //  current_string += data.t;
   //  disableMuxPort(MLXMuxPort);
   //  delay(10);
-  current_string += "; END \n"; //end
+  current_string += "; END"; //end
   delay(50);
 }
