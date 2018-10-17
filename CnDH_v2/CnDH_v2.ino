@@ -22,8 +22,8 @@
 TinyGPSPlus gps; //Declare gps object
 AS726X SpectralSensor; //declare
 I2CGPS myI2CGPS; //Hook object to the library
-SdFat SD;
-File myFile;
+
+
 //MLX90393 mlx;
 //MLX90393::txyz data; //Create a structure, called data, of four floats (t, x, y, and z)
 //RF24 radio(7, 8); // CE, CSN

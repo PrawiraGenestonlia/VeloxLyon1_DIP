@@ -1,28 +1,69 @@
 #include <Wire.h>
 #include "AS726X.h"
 #include <SPI.h>
-#include <QwiicMux.h>
+#include <QwiicMux0x49.h>
 #include <SdFat.h>
+#include <nRF24L01.h>
+#include <RF24.h>
 
-AS726X SpectralSensor; //declare
+#define PIN_SPI_MOSI 11
+#define PIN_SPI_MISO 12
+#define PIN_SPI_CLK 13
+#define PIN_SD_CS 10
+#define PIN_OTHER_DEVICE_CS 8
+#define SD_CARD_SPEED SPI_FULL_SPEED
 
-String output_string="";
+AS726X SpectralSensor;
+SdFat SD;
+File myFile;
+RF24 radio(7, 8); // CE, CSN
 
+String output_string = "";
+const byte address[6] = "00001";
+char buff[32];
+char cr;
 void setup() {
+  pinMode(PIN_SPI_MOSI, OUTPUT);
+  pinMode(PIN_SPI_MISO, INPUT);
+  pinMode(PIN_SPI_CLK, OUTPUT);
+  //Disable SPI devices
+  pinMode(PIN_SD_CS, OUTPUT);
+  digitalWrite(PIN_SD_CS, HIGH);
+
+#if PIN_OTHER_DEVICE_CS > 0
+  pinMode(PIN_OTHER_DEVICE_CS, OUTPUT);
+  digitalWrite(PIN_OTHER_DEVICE_CS, HIGH);
+#endif //PIN_OTHER_DEVICE_CS > 0
+
   Serial.begin(115200);
-  pinMode(A1,OUTPUT);
+  pinMode(A1, OUTPUT);
   Wire.begin();
+  enableMuxPort(9);
   SpectralSensor.begin();
+  if (!SD.begin(PIN_SD_CS, SD_CARD_SPEED))
+  {
+    Serial.println("SD card begin error");
+    return;
+  }
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
   Serial.println("The program is successfully initialized");
 }
 
 void loop() {
   update_output();
+  Serial.println(output_string);
   sd_write(output_string);
+  sd_read_lastline();
+  output_string.toCharArray(buff, 32);
+  radio.write(&buff, sizeof(buff));
+  delay(200);
 }
 
-void update_output(){
-  output_string = "#;";
+void update_output() {
+  output_string = "$;";
   SpectralSensor.takeMeasurements();
   delay(10);
   output_string += SpectralSensor.getTemperature();
@@ -63,3 +104,18 @@ void sd_read() {
     Serial.println("error opening..");
   }
 }
+
+void sd_read_lastline(){
+  myFile = SD.open("17102018.txt");
+  Serial.print("This is the last line: ");
+  while(true){
+    cr = myFile.read();
+    if((cr == '\n') && ("LAST LINE?"))
+        break;
+    
+    Serial.print(cr);
+    }
+    Serial.println("");
+  myFile.close();
+}
+
