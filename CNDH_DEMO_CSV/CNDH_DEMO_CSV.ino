@@ -5,23 +5,28 @@
 #include <SdFat.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <CSVFile.h>
 
 #define PIN_SPI_MOSI 11
 #define PIN_SPI_MISO 12
 #define PIN_SPI_CLK 13
-#define PIN_SD_CS 10
+#define PIN_SD_CS 4
 #define PIN_OTHER_DEVICE_CS 8
 #define SD_CARD_SPEED SPI_FULL_SPEED
+#define FILENAME "Demo_Test_1.csv"
 
 AS726X SpectralSensor;
 SdFat SD;
 File myFile;
+CSVFile csv;
 RF24 radio(7, 8); // CE, CSN
 
 String output_string = "";
+char* output_string2 = "";
 const byte address[6] = "00001";
 char buff[32];
 char cr;
+
 void setup() {
   pinMode(PIN_SPI_MOSI, OUTPUT);
   pinMode(PIN_SPI_MISO, INPUT);
@@ -45,6 +50,8 @@ void setup() {
     Serial.println("SD card begin error");
     return;
   }
+  csv.open("file.csv", O_RDWR | O_CREAT);
+  csv.close();
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MIN);
@@ -53,13 +60,28 @@ void setup() {
 }
 
 void loop() {
+  initSdFile();
   update_output();
   Serial.println(output_string);
-  sd_write(output_string);
-  sd_read_lastline();
+  
+//  sd_write(output_string);
+//  sd_read_lastline();
   output_string.toCharArray(buff, 32);
   radio.write(&buff, sizeof(buff));
+  csv.addField(output_string&);
+  csv.close();
   delay(200);
+}
+
+void initSdFile() {
+  if (SD.exists(FILENAME) && !SD.remove(FILENAME))
+  {
+    Serial.println("Failed init remove file");
+    return;
+  }
+  if (!csv.open(FILENAME, O_RDWR | O_CREAT)) {
+    Serial.println("Failed open file");
+  }
 }
 
 void update_output() {
@@ -70,13 +92,14 @@ void update_output() {
   output_string += ";";
   output_string += SpectralSensor.getCalibratedR();
   output_string += ";#";
+  output_string += "\n";
 }
 
 void sd_write(String info) {
-  myFile = SD.open("17102018.txt", FILE_WRITE);
+  myFile = SD.open("24102018.txt", FILE_WRITE);
   if (myFile) {
     digitalWrite(A1, HIGH);
-    Serial.print("Writing to 17102018.txt...");
+    Serial.print("Writing to 24102018.txt...");
     myFile.println(info);
     // close the file:
     myFile.close();
@@ -89,9 +112,9 @@ void sd_write(String info) {
 }
 
 void sd_read() {
-  myFile = SD.open("17102018.txt");
+  myFile = SD.open("24102018.txt");
   if (myFile) {
-    Serial.println("17102018.txt:");
+    Serial.println("24102018.txt:");
 
     // read from the file until there's nothing else in it:
     while (myFile.available()) {
@@ -106,7 +129,7 @@ void sd_read() {
 }
 
 void sd_read_lastline(){
-  myFile = SD.open("17102018.txt");
+  myFile = SD.open("24102018.txt");
   Serial.print("This is the last line: ");
   while(true){
     cr = myFile.read();

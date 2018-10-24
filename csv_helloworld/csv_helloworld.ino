@@ -19,7 +19,7 @@
 #define PIN_SPI_CLK 13
 #define PIN_SPI_MOSI 11
 #define PIN_SPI_MISO 12
-#define PIN_SD_CS 10
+#define PIN_SD_CS 4
 // If you have connected other SPI device then
 // put here number of pin for disable its.
 // Provide -1 if you don't have other devices.
