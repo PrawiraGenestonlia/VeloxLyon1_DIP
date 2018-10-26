@@ -35,7 +35,8 @@
 
 SdFat sd;
 CSVFile csv;
-
+  int i=0;
+  
 void setup() {
   // Setup pinout
   pinMode(PIN_SPI_MOSI, OUTPUT);
@@ -86,7 +87,7 @@ void loop() {
 
   // Each line is ended by end line character '\n',
   // (UNIX style - without '\r').
-  int i=0;
+
   initSdFile();
 
   // Create CSV

@@ -53,11 +53,10 @@ void setup() {
 }
 
 void loop() {
-//  update_output();
-  output_string="this is brandon";
+  update_output();
   Serial.println(output_string);
   sd_write(output_string);
-  sd_read_lastline();
+//  sd_read_lastline();
   output_string.toCharArray(buff, 32);
   radio.write(&buff, sizeof(buff));
   delay(200);
