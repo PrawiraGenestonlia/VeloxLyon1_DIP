@@ -1,5 +1,5 @@
 #define DEBUG  1
-//#define LOCAL_STORAGE 1
+#define LOCAL_STORAGE 1
 
 #include <Wire.h>
 #include "AS726X.h"
