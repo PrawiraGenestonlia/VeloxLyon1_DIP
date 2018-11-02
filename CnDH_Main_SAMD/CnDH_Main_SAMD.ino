@@ -4,7 +4,7 @@
   Library which can be found here:
   www.github.com/PaulStoffregen/RadioHeadd
 */
-//#define GPS 1
+#define GPS 1
 #include <SPI.h>
 #include <Wire.h>
 //Radio Head Library:

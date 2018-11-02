@@ -2,8 +2,12 @@ import serial
 import time
 import csv
 
+# ser = serial.Serial('/dev/cu.usbserial-DN01DFG4')
+# serial_port = '/dev/cu.usbserial-DN01DFG4'
+
 ser = serial.Serial('/dev/cu.usbmodem141101')
 serial_port = '/dev/cu.usbmodem141101'
+
 ser.flushInput()
 
 # while True:
