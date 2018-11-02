@@ -59,22 +59,22 @@ void loop()
       digitalWrite(LED, HIGH); //Turn on status LED
       timeSinceLastPacket = millis(); //Timestamp this packet
 
-      SerialUSB.print("Got message: ");
+      //SerialUSB.print("Got message: ");
       SerialUSB.print((char*)buf);
       //SerialUSB.print(" RSSI: ");
       //SerialUSB.print(rf95.lastRssi(), DEC);
-      SerialUSB.println();
+      //SerialUSB.println();
 
       // Send a reply
       uint8_t toSend[] = "Hello Back!"; 
       rf95.send(toSend, sizeof(toSend));
       rf95.waitPacketSent();
-      SerialUSB.println("Sent a reply");
+      //SerialUSB.println("Sent a reply");
       digitalWrite(LED, LOW); //Turn off status LED
 
     }
     else
-      SerialUSB.println("Recieve failed");
+      SerialUSB.println("Receive failed");
   }
   //Turn off status LED if we haven't received a packet after 1s
   if(millis() - timeSinceLastPacket > 1000){

@@ -4,7 +4,7 @@
   Library which can be found here:
   www.github.com/PaulStoffregen/RadioHeadd
 */
-#define GPS 1
+//#define GPS 1
 #include <SPI.h>
 #include <Wire.h>
 //Radio Head Library:
@@ -20,16 +20,17 @@ TinyGPSPlus gps; //Declare gps object
 I2CGPS myI2CGPS; //Hook object to the library
 #endif
 
+#define ARRSIZE 64
+
 // We need to provide the RFM95 module's chip select and interrupt pins to the
 // rf95 instance below.On the SparkFun ProRF those pins are 12 and 6 respectively.
 RH_RF95 rf95(12, 6);
 
 int LED = 13; //Status LED is on pin 13
 String str ="";
-char strchar[32]={};
 int packetCounter = 0; //Counts the number of packets sent
 long timeSinceLastPacket = 0; //Tracks the time stamp of last packet received
-
+String from_main="";
 // The broadcast frequency is set to 921.2, but the SADM21 ProRf operates
 // anywhere in the range of 902-928MHz in the Americas.
 // Europe operates in the frequencies 863-870, center frequency at 868MHz.
@@ -39,7 +40,7 @@ float frequency = 921.2; //Broadcast frequency
 
 String output_string = "";
 const byte address[6] = "00001";
-char buff[32];
+char buff[ARRSIZE];
 char cr;
 int incomingByte = 0;   // for incoming serial data
 
@@ -51,7 +52,7 @@ void setup()
   SerialUSB.begin(115200);
   // It may be difficult to read serial messages on startup. The following line
   // will wait for serial to be ready before continuing. Comment out if not needed.
-  while (!SerialUSB);
+//  while (!SerialUSB);
   SerialUSB.println("RFM Client!");
   
 #ifdef GPS 1
@@ -62,8 +63,6 @@ void setup()
   }
   disableMuxPort1(0);
 #endif
-  update_output();
-  SerialUSB.print(output_string);
   //Initialize the Radio.
   if (rf95.init() == false) {
     SerialUSB.println("Radio Init Failed - Freezing");
@@ -88,34 +87,22 @@ void setup()
 
 void loop()
 {
+  update_output();
+  output_string.toCharArray(buff, 32);
+  SerialUSB.print(buff);
+  
   SerialUSB.println("Sending message");
-
   //Send a message to the other radio
-  uint8_t toSend[] = "Hi there!";
+  uint8_t toSend[ARRSIZE] = {};
+  for (int i=0;i<ARRSIZE;i++){
+    toSend[i]=buff[i];
+  }
   //sprintf(toSend, "Hi, my counter is: %d", packetCounter++);
   rf95.send(toSend, sizeof(toSend));
   rf95.waitPacketSent();
 
-  // Now wait for a reply
-  byte buf[RH_RF95_MAX_MESSAGE_LEN];
-  byte len = sizeof(buf);
-
-  if (rf95.waitAvailableTimeout(2000)) {
-    // Should be a reply message for us now
-    if (rf95.recv(buf, &len)) {
-      SerialUSB.print("Got reply: ");
-      SerialUSB.println((char*)buf);
-      //SerialUSB.print(" RSSI: ");
-      //SerialUSB.print(rf95.lastRssi(), DEC);
-    }
-    else {
-      SerialUSB.println("Receive failed");
-    }
-  }
-  else {
-    SerialUSB.println("No reply, is the receiver running?");
-  }
-  delay(500);
+  
+  delay(200);
 }
 
 void update_output() {
@@ -137,7 +124,7 @@ void update_output() {
   disableMuxPort1(0);
 #endif
   delay(50);
-
+  output_string += from_main;
   output_string += ";#";
   output_string += "\n";
 }
@@ -145,8 +132,10 @@ void update_output() {
 
 void receiveEvent(int howMany)
 {
+    from_main="";
   while(Wire.available()){
-    str=Wire.read();
+    str=char(Wire.read());
+    from_main+=str;
     SerialUSB.print(str);
   }
   SerialUSB.println();
