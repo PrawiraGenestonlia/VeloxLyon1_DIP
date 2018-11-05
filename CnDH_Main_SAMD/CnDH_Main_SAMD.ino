@@ -4,7 +4,7 @@
   Library which can be found here:
   www.github.com/PaulStoffregen/RadioHeadd
 */
-#define GPS 1
+//#define GPS 1
 #include <SPI.h>
 #include <Wire.h>
 //Radio Head Library:
@@ -27,10 +27,10 @@ I2CGPS myI2CGPS; //Hook object to the library
 RH_RF95 rf95(12, 6);
 
 int LED = 13; //Status LED is on pin 13
-String str ="";
+String str = "";
 int packetCounter = 0; //Counts the number of packets sent
 long timeSinceLastPacket = 0; //Tracks the time stamp of last packet received
-String from_main="";
+String from_main = "";
 // The broadcast frequency is set to 921.2, but the SADM21 ProRf operates
 // anywhere in the range of 902-928MHz in the Americas.
 // Europe operates in the frequencies 863-870, center frequency at 868MHz.
@@ -43,6 +43,7 @@ const byte address[6] = "00001";
 char buff[ARRSIZE];
 char cr;
 int incomingByte = 0;   // for incoming serial data
+int state = 0;
 
 void setup()
 {
@@ -52,9 +53,9 @@ void setup()
   SerialUSB.begin(115200);
   // It may be difficult to read serial messages on startup. The following line
   // will wait for serial to be ready before continuing. Comment out if not needed.
-//  while (!SerialUSB);
+  //  while (!SerialUSB);
   SerialUSB.println("RFM Client!");
-  
+
 #ifdef GPS 1
   enableMuxPort1(0);
   if (myI2CGPS.begin() == false) {//Checks for succesful initialization of GPS
@@ -88,56 +89,89 @@ void setup()
 void loop()
 {
   update_output();
-  output_string.toCharArray(buff, 32);
+  output_string.toCharArray(buff, ARRSIZE);
   SerialUSB.print(buff);
-  
-  SerialUSB.println("Sending message");
-  //Send a message to the other radio
-  uint8_t toSend[ARRSIZE] = {};
-  for (int i=0;i<ARRSIZE;i++){
-    toSend[i]=buff[i];
-  }
-  //sprintf(toSend, "Hi, my counter is: %d", packetCounter++);
-  rf95.send(toSend, sizeof(toSend));
-  rf95.waitPacketSent();
 
-  
+  if (rf95.available()) {
+    // Should be a message for us now
+    uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t len = sizeof(buf);
+    int received_message;
+    if (rf95.recv(buf, &len)) {
+      timeSinceLastPacket = millis(); //Timestamp this packet
+      received_message = atoi((char*)buf);
+      SerialUSB.print("Got message: ");
+      SerialUSB.print(received_message);
+      if (received_message == 11) {
+        state = 1;
+      }
+      if (received_message == 22) {
+        state = 2;
+      }
+      if (received_message == 33) {
+        state = 3;
+      }
+    }
+  }
+
+  if (state == 1) {
+    SerialUSB.println("Sending message");
+    uint8_t toSend[ARRSIZE] = {};
+    for (int i = 0; i < ARRSIZE; i++) {
+      toSend[i] = buff[i];
+    }
+    rf95.send(toSend, sizeof(toSend));
+    rf95.waitPacketSent();
+  }
+
+  if (state == 2) {
+
+  }
+
+  if (state == 3) {
+
+  }
+
   delay(200);
 }
 
+//void update_output() {
+//  output_string = "$;";
+//#ifdef GPS 1
+//  enableMuxPort1(0);
+//  while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
+//    gps.encode(myI2CGPS.read()); //Feed the GPS parser
+//  }
+//  output_string += gps.date.day();
+//  output_string += "/";
+//  output_string += gps.date.month();
+//  output_string += "/";
+//  output_string += gps.date.year();
+//  output_string += ";";
+//  output_string += gps.location.lat(); //GPS latitude
+//  output_string += ";";
+//  output_string += gps.location.lng(); //GPS longitude
+//  disableMuxPort1(0);
+//#endif
+//  delay(50);
+//  output_string += from_main;
+//  output_string += ";#";
+//  output_string += "\n";
+//}
+
 void update_output() {
-  output_string = "$;";
-#ifdef GPS 1
-  enableMuxPort1(0);
-  while (myI2CGPS.available()) { //available() returns the number of new bytes available from the GPS module
-    gps.encode(myI2CGPS.read()); //Feed the GPS parser
-  }
-  output_string += gps.date.day();
-  output_string += "/";
-  output_string += gps.date.month();
-  output_string += "/";
-  output_string += gps.date.year();
-  output_string += ";";
-  output_string += gps.location.lat(); //GPS latitude
-  output_string += ";";
-  output_string += gps.location.lng(); //GPS longitude
-  disableMuxPort1(0);
-#endif
-  delay(50);
   output_string += from_main;
-  output_string += ";#";
-  output_string += "\n";
 }
 
 
 void receiveEvent(int howMany)
 {
-    from_main="";
-  while(Wire.available()){
-    str=char(Wire.read());
-    from_main+=str;
+  from_main = "";
+  while (Wire.available()) {
+    str = char(Wire.read());
+    from_main += str;
     SerialUSB.print(str);
   }
   SerialUSB.println();
-  
+
 }

@@ -134,9 +134,8 @@ void sd_read_lastline() {
 
 void transmit_to_SAMD(String info){
   enableMuxPort(7);
-  Wire.beginTransmission(7); // transmit to device #9
-
-  for (int i=2;i<18;i++){
+  Wire.beginTransmission(7); // transmit to device #7
+  for (int i=0;i<info.length();i++){
     Wire.write(char(info[i]));
   } 
   Wire.endTransmission();    // stop transmitting
