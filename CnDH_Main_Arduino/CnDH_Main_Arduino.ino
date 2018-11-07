@@ -48,7 +48,7 @@ void setup() {
   {
     Serial.println("SD card begin error");
     return;
-  }
+  } 
 
   sd_write("this program is initialized \n");
   Serial.println("The program is successfully initialized");
@@ -141,4 +141,3 @@ void transmit_to_SAMD(String info){
   Wire.endTransmission();    // stop transmitting
   disableMuxPort(7);
 }
-
