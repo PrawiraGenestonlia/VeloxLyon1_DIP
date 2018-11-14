@@ -31,6 +31,7 @@ bool deployment = true;
 const long deployment_time = 180000;
 const long beacon_interval = 2000;
 const long transmit_interval = 60000;
+int received_message2 = 999;
 
 void setup() {
   pinMode(PIN_SPI_MOSI, OUTPUT);
@@ -75,6 +76,10 @@ void loop() {
     if (currentMillisDeploy - previousMillisBeacon >= beacon_interval) {
       previousMillisBeacon = currentMillisDeploy;
       ping_beacon();
+    }
+    if (received_message2 == 999) {
+      digitalWrite(5, LOW);
+      deployment == false;
     }
   }
   unsigned long currentMillis = millis();
