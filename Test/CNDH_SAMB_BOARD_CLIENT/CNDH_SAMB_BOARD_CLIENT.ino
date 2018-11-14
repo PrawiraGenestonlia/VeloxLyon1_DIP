@@ -4,7 +4,7 @@
   Library which can be found here:
   www.github.com/PaulStoffregen/RadioHeadd
 */
-#define GPS 1
+//#define GPS 1
 #include <SPI.h>
 #include <Wire.h>
 //Radio Head Library:
@@ -51,7 +51,7 @@ void setup()
   SerialUSB.begin(115200);
   // It may be difficult to read serial messages on startup. The following line
   // will wait for serial to be ready before continuing. Comment out if not needed.
-  while (!SerialUSB);
+//  while (!SerialUSB);
   SerialUSB.println("RFM Client!");
   
 #ifdef GPS 1
@@ -91,30 +91,30 @@ void loop()
   SerialUSB.println("Sending message");
 
   //Send a message to the other radio
-  uint8_t toSend[] = "Hi there!";
+  uint8_t toSend[] = "Hi there! This is radio";
   //sprintf(toSend, "Hi, my counter is: %d", packetCounter++);
   rf95.send(toSend, sizeof(toSend));
   rf95.waitPacketSent();
 
   // Now wait for a reply
-  byte buf[RH_RF95_MAX_MESSAGE_LEN];
-  byte len = sizeof(buf);
-
-  if (rf95.waitAvailableTimeout(2000)) {
-    // Should be a reply message for us now
-    if (rf95.recv(buf, &len)) {
-      SerialUSB.print("Got reply: ");
-      SerialUSB.println((char*)buf);
-      //SerialUSB.print(" RSSI: ");
-      //SerialUSB.print(rf95.lastRssi(), DEC);
-    }
-    else {
-      SerialUSB.println("Receive failed");
-    }
-  }
-  else {
-    SerialUSB.println("No reply, is the receiver running?");
-  }
+//  byte buf[RH_RF95_MAX_MESSAGE_LEN];
+//  byte len = sizeof(buf);
+//
+//  if (rf95.waitAvailableTimeout(2000)) {
+//    // Should be a reply message for us now
+//    if (rf95.recv(buf, &len)) {
+//      SerialUSB.print("Got reply: ");
+//      SerialUSB.println((char*)buf);
+//      //SerialUSB.print(" RSSI: ");
+//      //SerialUSB.print(rf95.lastRssi(), DEC);
+//    }
+//    else {
+//      SerialUSB.println("Receive failed");
+//    }
+//  }
+//  else {
+//    SerialUSB.println("No reply, is the receiver running?");
+//  }
   delay(500);
 }
 

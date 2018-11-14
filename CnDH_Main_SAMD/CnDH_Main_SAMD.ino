@@ -34,17 +34,22 @@ long timeSinceLastPacket = 0; //Tracks the time stamp of last packet received
 String from_main = "";
 String from_main2 = "";
 String first_part = "" , second_part = "";
+int k;
 
 // The broadcast frequency is set to 921.2, but the SADM21 ProRf operates
 // anywhere in the range of 902-928MHz in the Americas.
 // Europe operates in the frequencies 863-870, center frequency at 868MHz.
 // This works but it is unknown how well the radio configures to this frequency:
 //float frequency = 864.1;
-float frequency = 921.2; //Broadcast frequency
+float frequency = 868; //Broadcast frequency (921.2)
 unsigned long previousMillis = 0;        // will store last time LED was updated
+unsigned long previousMillisDeploy = 0;
+unsigned long previousMillisBeacon = 0;
 
 // constants won't change:
-const long interval = 5000;           // interval at which to blink (milliseconds)
+const long deployment_time = 180000;
+const long beacon_interval = 2000;
+const long interval = 60000;           // interval at which to blink (milliseconds)
 String output_string = "";
 const byte address[6] = "00001";
 char buff[ARRSIZE];
@@ -52,13 +57,14 @@ char cr;
 int incomingByte = 0;   // for incoming serial data
 int state = 1;
 int received_state = 1;
-String *first_part2;
+bool deployment = true;
 
 void setup()
 {
   pinMode(LED, OUTPUT);
+  pinMode(5, OUTPUT);
   Wire.begin(7);
-  Wire.onReceive(receiveEvent2);
+  Wire.onReceive(receiveEvent);
   SerialUSB.begin(115200);
   // It may be difficult to read serial messages on startup. The following line
   // will wait for serial to be ready before continuing. Comment out if not needed.
@@ -97,9 +103,49 @@ void setup()
 
 void loop()
 {
-  //
-    SerialUSB.print("This is from void loop: ");
-    SerialUSB.println(*first_part2);
+  while (deployment == true) {
+    unsigned long currentMillisDeploy = millis();
+    if (currentMillisDeploy - previousMillisDeploy >= deployment_time) {
+      digitalWrite(5, HIGH);
+    }
+    if (currentMillisDeploy - previousMillisBeacon >= beacon_interval) {
+      previousMillisBeacon = currentMillisDeploy;
+      ping_beacon();
+
+    }
+
+    int received_message2;
+    if (rf95.available()) {
+      uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+      uint8_t len = sizeof(buf);
+
+      if (rf95.recv(buf, &len)) {
+        timeSinceLastPacket = millis(); //Timestamp this packet
+        received_message2 = atoi((char*)buf);
+        SerialUSB.print("Got message: ");
+        SerialUSB.print(received_message2);
+      }
+    }
+    if (received_message2 == 999) {
+      digitalWrite(5, LOW);
+      deployment == false;
+    }
+  }
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillisBeacon >= beacon_interval) {
+    previousMillisBeacon = currentMillis;
+    ping_beacon();
+
+  }
+
+  for (k = 0; k < ARRSIZE; k++) {
+    String hex = "#";
+    if (char(from_main[k]) == char(hex[0])) {
+      output_string = stringy(from_main);
+      break;
+    }
+  }
   if (rf95.available()) {
     // Should be a message for us now
     uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
@@ -121,28 +167,33 @@ void loop()
       }
     }
   }
-  unsigned long currentMillis = millis();
+
 
   if (currentMillis - previousMillis >= interval) {
-    // save the last time you blinked the LED
     previousMillis = currentMillis;
-
-//    output_string = second_part;
-
-    
-    output_string.toCharArray(buff, ARRSIZE);
-
+    //    output_string = stringy(from_main);
+    for (k = 0; k < ARRSIZE; k++) {
+      String hex = "#";
+      if (char(output_string[k]) == char(hex[0])) {
+        break;
+      }
+    }
+    k = k + 2;
+    output_string.toCharArray(buff, k);
 
     if (state == 1) {
-      SerialUSB.print("Sending message: ");
+      SerialUSB.print("Sending message (full battery): ");
       SerialUSB.print(buff);
       SerialUSB.println();
-      uint8_t toSend[ARRSIZE] = {};
-      for (int i = 0; i < ARRSIZE; i++) {
+      uint8_t toSend[64] = {};
+      for (int i = 0; i < k; i++) {
         toSend[i] = buff[i];
+        //        SerialUSB.print(char(toSend[i]));
       }
+
       rf95.send(toSend, sizeof(toSend));
       rf95.waitPacketSent();
+
     }
 
     if (state == 2) {
@@ -154,7 +205,7 @@ void loop()
     }
     delay(200);
   }
-  delay(50);
+  delay(100);
 }
 
 void update_output() {
@@ -182,46 +233,29 @@ void update_output() {
   output_string += "\n";
 }
 
+void ping_beacon() {
+  SerialUSB.print("Ping: ");
+  SerialUSB.print("@101");
+  SerialUSB.println();
+  uint8_t toSend[64] = "@101";
+  rf95.send(toSend, sizeof(toSend));
+  rf95.waitPacketSent();
+}
 
 void receiveEvent(int howMany)
 {
-  from_main = "";
   while (Wire.available()) {
     str = char(Wire.read());
     from_main += str;
-    SerialUSB.print(str);
+    //    SerialUSB.print(str);
   }
 
-  SerialUSB.println();
+  //  SerialUSB.println();
 
 }
 
-void receiveEvent2(int howMany) {
-  if (received_state == 1) {
-    from_main = "";
-    while (Wire.available()) {
-      str = char(Wire.read());
-      from_main += str;
-      //      SerialUSB.print(str);
-    }
-    first_part = from_main;
-//    SerialUSB.print(first_part);`
-    received_state = 2;
 
-  }
-  if (received_state == 2) {
-    from_main2 = "";
-    while (Wire.available()) {
-      str = char(Wire.read());
-      from_main2 += str;
-      //      SerialUSB.print(str);
-    }
-    second_part = from_main2;
-//    SerialUSB.print(second_part);
-    received_state = 1;
-    output_string = first_part+second_part;
-    first_part2= &output_string;
-    SerialUSB.print(output_string);
-  }
-
+String stringy(String info) {
+  from_main = "";
+  return info;
 }

@@ -61,6 +61,7 @@ void loop()
 
       //SerialUSB.print("Got message: ");
       SerialUSB.print((char*)buf);
+      SerialUSB.println("");
       //SerialUSB.print(" RSSI: ");
       //SerialUSB.print(rf95.lastRssi(), DEC);
       //SerialUSB.println();

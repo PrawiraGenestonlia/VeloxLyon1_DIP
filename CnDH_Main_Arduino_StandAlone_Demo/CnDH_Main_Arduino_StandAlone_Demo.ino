@@ -23,7 +23,14 @@ MLX90393::txyz data;
 String output_string = "";
 const byte address[6] = "00001";
 char buff[64];
+unsigned long previousMillis = 0;
+unsigned long previousMillisDeploy = 0;
+unsigned long previousMillisBeacon = 0;
+bool deployment = true;
 
+const long deployment_time = 180000;
+const long beacon_interval = 2000;
+const long transmit_interval = 60000;
 
 void setup() {
   pinMode(PIN_SPI_MOSI, OUTPUT);
@@ -54,27 +61,46 @@ void setup() {
     Serial.println("SD card begin error");
     return;
   }
-  
+
   sd_write("this program is initialized \n");
   Serial.println("The program is successfully initialized");
 }
 
 void loop() {
+  while (deployment == true) {
+    unsigned long currentMillisDeploy = millis();
+    if (currentMillisDeploy - previousMillisDeploy >= deployment_time) {
+      digitalWrite(5, HIGH);
+    }
+    if (currentMillisDeploy - previousMillisBeacon >= beacon_interval) {
+      previousMillisBeacon = currentMillisDeploy;
+      ping_beacon();
+    }
+  }
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillisBeacon >= beacon_interval) {
+    previousMillisBeacon = currentMillis;
+    ping_beacon();
+
+  }
+  if (currentMillis - previousMillis >= transmit_interval) {
+    previousMillis = currentMillis;
+    Serial.print(buff);
+  }
   update_output();
 
   output_string.toCharArray(buff, 64);
   Serial.print(buff);
 
-  delay(250);
+  //  delay(250);
   sd_write(buff);
-  transmit_to_SAMD(buff);
+  //  transmit_to_SAMD(buff);
 }
 
 
 void update_output() {
   output_string = "$;";
-  //output_string = battery_reading;
-  output_string += ";";
   enableMuxPort(1);
   SpectralSensor.takeMeasurements();
   delay(10);
@@ -166,4 +192,13 @@ void transmit_to_SAMD(String info) {
   Wire.endTransmission();    // stop transmitting
   disableMuxPort(7);
   delay(100);
+}
+
+void ping_beacon() {
+  SerialUSB.print("Ping: ");
+  SerialUSB.print("@101");
+  SerialUSB.println();
+  //  uint8_t toSend[64] = "@101";
+  //  rf95.send(toSend, sizeof(toSend));
+  //  rf95.waitPacketSent();
 }
