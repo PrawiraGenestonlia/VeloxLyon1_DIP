@@ -58,6 +58,7 @@ int incomingByte = 0;   // for incoming serial data
 int state = 1;
 int received_state = 1;
 bool deployment = true;
+bool start_beacon = false;
 
 void setup()
 {
@@ -107,8 +108,9 @@ void loop()
     unsigned long currentMillisDeploy = millis();
     if (currentMillisDeploy - previousMillisDeploy >= deployment_time) {
       digitalWrite(5, HIGH);
+      start_beacon = true;
     }
-    if (currentMillisDeploy - previousMillisBeacon >= beacon_interval) {
+    if ((currentMillisDeploy - previousMillisBeacon >= beacon_interval)&&start_beacon==true) {
       previousMillisBeacon = currentMillisDeploy;
       ping_beacon();
 
@@ -131,6 +133,7 @@ void loop()
       deployment == false;
     }
   }
+  
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillisBeacon >= beacon_interval) {
