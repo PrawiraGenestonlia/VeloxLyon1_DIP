@@ -1,3 +1,5 @@
+#include <SparkFunBQ27441.h>
+#include <BQ27441_Definitions.h>
 #include <Wire.h>
 #include "AS726X.h"
 #include <SPI.h>
@@ -5,6 +7,7 @@
 #include <QwiicMux0x10.h>
 #include <SdFat.h>
 #include <MLX90393.h>
+
 
 #define PIN_SPI_MOSI 11
 #define PIN_SPI_MISO 12
@@ -23,7 +26,7 @@ MLX90393::txyz data;
 String output_string = "";
 const byte address[6] = "00001";
 char buff[64];
-
+const unsigned int BATTERY_CAPACITY = 850; // e.g. 850mAh battery
 
 void setup() {
   pinMode(PIN_SPI_MOSI, OUTPUT);
@@ -49,6 +52,9 @@ void setup() {
   enableMuxPort(4);
   mlx.begin();
   disableMuxPort(4);
+  enableMuxPort(6);
+  setupBQ27441();
+  disableMuxPort(6);
   if (!SD.begin(PIN_SD_CS, SD_CARD_SPEED))
   {
     Serial.println("SD card begin error");
@@ -73,7 +79,9 @@ void loop() {
 
 void update_output() {
   output_string = "$;";
-  //output_string = battery_reading;
+  enableMuxPort(6);
+  output_string += String(lipo.soc());
+  disableMuxPort(6);
   output_string += ";";
   enableMuxPort(1);
   SpectralSensor.takeMeasurements();
@@ -149,6 +157,25 @@ void sd_read_lastline() {
   }
   Serial.println("");
   myFile.close();
+}
+
+void setupBQ27441(void)
+{
+  // Use lipo.begin() to initialize the BQ27441-G1A and confirm that it's
+  // connected and communicating.
+  if (!lipo.begin()) // begin() will return true if communication is successful
+  {
+  // If communication fails, print an error message and loop forever.
+    Serial.println("Error: Unable to communicate with BQ27441.");
+    Serial.println("  Check wiring and try again.");
+    Serial.println("  (Battery must be plugged into Battery Babysitter!)");
+    while (1) ;
+  }
+  Serial.println("Connected to BQ27441!");
+  
+  // Uset lipo.setCapacity(BATTERY_CAPACITY) to set the design capacity
+  // of your battery.
+  lipo.setCapacity(BATTERY_CAPACITY);
 }
 
 void transmit_to_SAMD(String info) {
