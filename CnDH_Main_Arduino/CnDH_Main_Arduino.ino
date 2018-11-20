@@ -52,9 +52,9 @@ void setup() {
   enableMuxPort(4);
   mlx.begin();
   disableMuxPort(4);
-  enableMuxPort(6);
-  setupBQ27441();
-  disableMuxPort(6);
+//  enableMuxPort(6);
+//  setupBQ27441();
+//  disableMuxPort(6);
   if (!SD.begin(PIN_SD_CS, SD_CARD_SPEED))
   {
     Serial.println("SD card begin error");
@@ -79,9 +79,10 @@ void loop() {
 
 void update_output() {
   output_string = "$;";
-  enableMuxPort(6);
-  output_string += String(lipo.soc());
-  disableMuxPort(6);
+//  enableMuxPort(6);
+//  output_string += String(lipo.soc());
+//  disableMuxPort(6);
+  output_string += "60";
   output_string += ";";
   enableMuxPort(1);
   SpectralSensor.takeMeasurements();
@@ -159,24 +160,24 @@ void sd_read_lastline() {
   myFile.close();
 }
 
-void setupBQ27441(void)
-{
-  // Use lipo.begin() to initialize the BQ27441-G1A and confirm that it's
-  // connected and communicating.
-  if (!lipo.begin()) // begin() will return true if communication is successful
-  {
-  // If communication fails, print an error message and loop forever.
-    Serial.println("Error: Unable to communicate with BQ27441.");
-    Serial.println("  Check wiring and try again.");
-    Serial.println("  (Battery must be plugged into Battery Babysitter!)");
-    while (1) ;
-  }
-  Serial.println("Connected to BQ27441!");
-  
-  // Uset lipo.setCapacity(BATTERY_CAPACITY) to set the design capacity
-  // of your battery.
-  lipo.setCapacity(BATTERY_CAPACITY);
-}
+//void setupBQ27441(void)
+//{
+//  // Use lipo.begin() to initialize the BQ27441-G1A and confirm that it's
+//  // connected and communicating.
+//  if (!lipo.begin()) // begin() will return true if communication is successful
+//  {
+//  // If communication fails, print an error message and loop forever.
+//    Serial.println("Error: Unable to communicate with BQ27441.");
+//    Serial.println("  Check wiring and try again.");
+//    Serial.println("  (Battery must be plugged into Battery Babysitter!)");
+//    while (1) ;
+//  }
+//  Serial.println("Connected to BQ27441!");
+//  
+//  // Uset lipo.setCapacity(BATTERY_CAPACITY) to set the design capacity
+//  // of your battery.
+//  lipo.setCapacity(BATTERY_CAPACITY);
+//}
 
 void transmit_to_SAMD(String info) {
   enableMuxPort(7);

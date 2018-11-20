@@ -47,9 +47,9 @@ unsigned long previousMillisDeploy = 0;
 unsigned long previousMillisBeacon = 0;
 
 // constants won't change:
-const long deployment_time = 180000;
+const long deployment_time = 30000;
 const long beacon_interval = 2000;
-const long interval = 60000;           // interval at which to blink (milliseconds)
+const long interval = 30000;           // interval at which to blink (milliseconds)
 String output_string = "";
 const byte address[6] = "00001";
 char buff[ARRSIZE];
@@ -59,11 +59,12 @@ int state = 1;
 int received_state = 1;
 bool deployment = true;
 bool start_beacon = false;
+char acknowledge[]="999";
 
 void setup()
 {
-  pinMode(LED, OUTPUT);
-  pinMode(5, OUTPUT);
+//  pinMode(LED, OUTPUT);
+//  pinMode(5, OUTPUT);
   Wire.begin(7);
   Wire.onReceive(receiveEvent);
   SerialUSB.begin(115200);
@@ -81,6 +82,7 @@ void setup()
   disableMuxPort1(0);
 #endif
   //Initialize the Radio.
+  
   if (rf95.init() == false) {
     SerialUSB.println("Radio Init Failed - Freezing");
     while (1);
@@ -106,6 +108,7 @@ void loop()
 {
   while (deployment == true) {
     unsigned long currentMillisDeploy = millis();
+//    SerialUSB.println(currentMillisDeploy);
     if (currentMillisDeploy - previousMillisDeploy >= deployment_time) {
       digitalWrite(5, HIGH);
       start_beacon = true;
@@ -116,29 +119,34 @@ void loop()
 
     }
 
-    int received_message2;
+    String received_message2;
     if (rf95.available()) {
       uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
       uint8_t len = sizeof(buf);
 
       if (rf95.recv(buf, &len)) {
         timeSinceLastPacket = millis(); //Timestamp this packet
-        received_message2 = atoi((char*)buf);
+        received_message2 += (char*)buf;
         SerialUSB.print("Got message: ");
-        SerialUSB.print(received_message2);
+        SerialUSB.print((char*)buf);
+        SerialUSB.println();
       }
     }
-    if (received_message2 == 999) {
+    char testt[5];
+    received_message2.toCharArray(testt,5);
+    SerialUSB.println(testt);
+    if (testt[0] == '9') {
       digitalWrite(5, LOW);
       deployment == false;
     }
+
   }
   
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillisBeacon >= beacon_interval) {
     previousMillisBeacon = currentMillis;
-    ping_beacon();
+    ping_beacon2();
 
   }
 
@@ -245,6 +253,14 @@ void ping_beacon() {
   rf95.waitPacketSent();
 }
 
+void ping_beacon2() {
+  SerialUSB.print("Ping: ");
+  SerialUSB.print("!101");
+  SerialUSB.println();
+  uint8_t toSend[64] = "!101";
+  rf95.send(toSend, sizeof(toSend));
+  rf95.waitPacketSent();
+}
 void receiveEvent(int howMany)
 {
   while (Wire.available()) {
