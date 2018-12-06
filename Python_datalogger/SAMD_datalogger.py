@@ -13,10 +13,20 @@ ser.flushInput()
 while True:
     line = ser.readline();
     line = line.decode("utf-8") #ser.readline returns a binary, convert to string
-    print(line);
+#    print(line);
     data=line
     output_file.write(line);
-#    with open("data.csv", "wb") as csv_file:
-#        writer = csv.writer(csv_file, delimiter=';')
-#        for line in data:
-#            writer.writerow(line)
+    a = data.split(";");
+#    print(a);
+    if((a[0]=="$")&(a[9]=="#\n") ):
+        print("Current date & time : " + time.strftime("%c"));
+        print("Battery level : "+a[1]);
+        print("Temperature : "+a[2]);
+        print("Spetral Sensor (V) : "+a[3]);
+        print("Spetral Sensor (IR) : "+a[4]);
+        print("Magnetometer, x: "+a[5]+" ,y: "+a[6]+" ,z: "+a[7]+" ,t: "+a[8]);
+        print("\n\n\n");
+    else:
+        print("Data is corrupted");
+        
+
