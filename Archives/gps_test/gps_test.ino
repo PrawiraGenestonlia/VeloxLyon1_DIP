@@ -28,9 +28,12 @@ I2CGPS myI2CGPS; //Hook object to the library
 #include <TinyGPS++.h> //From: https://github.com/mikalhart/TinyGPSPlus
 TinyGPSPlus gps; //Declare gps object
 
+#include <QwiicMux.h>
+
 void setup()
 {
   Serial.begin(115200);
+  enableMuxPort(3);
   Serial.println("GTOP Read Example");
 
   if (myI2CGPS.begin() == false)

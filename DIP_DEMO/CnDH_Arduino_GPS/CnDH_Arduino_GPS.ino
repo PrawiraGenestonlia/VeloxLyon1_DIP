@@ -22,23 +22,19 @@ void setup()
 
 void loop()
 {
-  printInfo();
-  delay(50);
+  updateInfo();
+  delay(100);
 }
 
 void requestEvent() {
-  printInfo();
-  for (int i=current_string.length();i<28;i++){
-      current_string[i]="";
-  }
-char buff2[28];
-  current_string.toCharArray(buff2,28);
+  char buff2[32];
+  current_string.toCharArray(buff2,32);
   Serial.print("Sending this....");
   Serial.println(buff2);
   Wire.write(buff2);
 }
 
-void printInfo(){
+void updateInfo(){
   current_string="";
   while (myI2CGPS.available()) //available() returns the number of new bytes available from the GPS module
   {
@@ -57,7 +53,6 @@ void printInfo(){
     current_string += ";";
     current_string += gps.location.lng(); //GPS longitude
   }
-  Serial.println(current_string);
 }
 
 //Display new GPS info

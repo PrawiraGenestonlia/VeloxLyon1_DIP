@@ -14,22 +14,37 @@ while True:
     line = ser.readline();
     line = line.decode("utf-8") #ser.readline returns a binary, convert to string
 #    print(line);
+#    print(len(line));
     data=line
     output_file.write(line);
     if (data[0]=="$"):
-        a = data.split(";");
-        if((a[0]=="$")&(a[9]=="#\n") ):
-            print("Current date & time : " + time.strftime("%c"));
-            print("Battery level : "+a[1]);
-            print("Temperature : "+a[2]);
-            print("Spetral Sensor (V) : "+a[3]);
-            print("Spetral Sensor (IR) : "+a[4]);
-            print("Magnetometer, x: "+a[5]+" ,y: "+a[6]+" ,z: "+a[7]+" ,t: "+a[8]);
-            print("\n\n\n");
+        if (len(data)>=35):
+            a = data.split(";");
+             if((a[0]=="$")&(a[12]=="#\n") ):
+                print("Current date & time : " + time.strftime("%c"));
+                print("\n" +"The packet received from satellite:  " + data);
+                print(len(data));
+                print("----------------------------------");
+                print("Battery level : "+a[1]);
+                print("Temperature : "+a[2]);
+                print("Spetral Sensor (V) : "+a[3]);
+                print("Spetral Sensor (IR) : "+a[4]);
+                print("Magnetometer, x: "+a[5]+" ,y: "+a[6]+" ,z: "+a[7]+" ,t: "+a[8]);
+                print("GPS time and date: "+ a[9]);
+                print("GPS latitude: "+ a[10]);
+                print("GPS longitude: "+ a[11]);
+                print("----------------------------------");
+                print("\n\n\n");
         else:
             print("Data is corrupted");
-    if (data[0]=="@"):
+        data={};
+    elif (data[0]=="@"):
         print("Current date & time : " + time.strftime("%c"));
         print("The satellite is healthy");
-
+        print("\n\n\n");
+        data={};
+    elif (data[0]=="&"):
+        print("The satellite is deploying its antenna")
+        print("\n\n\n");
+        data={};
 
