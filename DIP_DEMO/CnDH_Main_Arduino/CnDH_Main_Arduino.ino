@@ -48,6 +48,9 @@ void setup() {
   pinMode(13,OUTPUT);
   pinMode(2,OUTPUT);
   digitalWrite(2,LOW);
+  pinMode(5,OUTPUT);
+  pinMode(6,OUTPUT);
+  digitalWrite(6,LOW);
 #if PIN_OTHER_DEVICE_CS > 0
   pinMode(PIN_OTHER_DEVICE_CS, OUTPUT);
   digitalWrite(PIN_OTHER_DEVICE_CS, HIGH);
@@ -123,6 +126,7 @@ void loop() {
     transmit_RF("@11\n");
     previousMillisBeacon = currentMillis;
     digitalWrite(13,HIGH);
+    digitalWrite(5,HIGH);
     delay(50);
   }
 
@@ -133,6 +137,7 @@ void loop() {
   }
 
 digitalWrite(13,LOW);
+digitalWrite(5,LOW);
 
 
 }
