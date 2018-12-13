@@ -18,12 +18,12 @@ while True:
     data=line
     output_file.write(line);
     if (data[0]=="$"):
-        if (len(data)>=35):
+        if (len(data)>=60):
             a = data.split(";");
-             if((a[0]=="$")&(a[12]=="#\n") ):
-                print("Current date & time : " + time.strftime("%c"));
-                print("\n" +"The packet received from satellite:  " + data);
-                print(len(data));
+            print("Current date & time : " + time.strftime("%c"));
+            print("\n" +"The packet received from satellite:  " + data);
+#            print(len(data));
+            if((a[0]=="$")&(a[12]=="#\n") ):
                 print("----------------------------------");
                 print("Battery level : "+a[1]);
                 print("Temperature : "+a[2]);
@@ -33,6 +33,23 @@ while True:
                 print("GPS time and date: "+ a[9]);
                 print("GPS latitude: "+ a[10]);
                 print("GPS longitude: "+ a[11]);
+                print("----------------------------------");
+                print("\n\n\n");
+        elif (len(data)>35) :
+            a = data.split(";");
+            print("Current date & time : " + time.strftime("%c"));
+            print("\n" +"The packet received from satellite:  " + data);
+            print(len(data));
+            if((a[0]=="$")&(a[10]=="#\n") ):
+                print("----------------------------------");
+                print("Battery level : "+a[1]);
+                print("Temperature : "+a[2]);
+                print("Spetral Sensor (V) : "+a[3]);
+                print("Spetral Sensor (IR) : "+a[4]);
+                print("Magnetometer, x: "+a[5]+" ,y: "+a[6]+" ,z: "+a[7]+" ,t: "+a[8]);
+                print("GPS time and date: "+ "No data");
+                print("GPS latitude: "+ "No data");
+                print("GPS longitude: "+ "No data");
                 print("----------------------------------");
                 print("\n\n\n");
         else:

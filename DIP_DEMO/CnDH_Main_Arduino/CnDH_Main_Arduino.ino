@@ -49,8 +49,8 @@ void setup() {
   pinMode(2,OUTPUT);
   digitalWrite(2,LOW);
   pinMode(5,OUTPUT);
-  pinMode(6,OUTPUT);
-  digitalWrite(6,LOW);
+  pinMode(8,OUTPUT);
+  digitalWrite(8,LOW);
 #if PIN_OTHER_DEVICE_CS > 0
   pinMode(PIN_OTHER_DEVICE_CS, OUTPUT);
   digitalWrite(PIN_OTHER_DEVICE_CS, HIGH);
@@ -303,7 +303,7 @@ void transmit_RF(String info) {
 }
 
 void transmit_SD(String info) {
-  Serial.print("Saving .... :");
+  Serial.print("Saving .... :\n");
 //  Serial.println(info);
   enableMuxPort(5);
   Wire.beginTransmission(9); // transmit to device #7

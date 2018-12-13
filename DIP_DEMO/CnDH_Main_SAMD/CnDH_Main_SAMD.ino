@@ -55,7 +55,7 @@ void setup()
   rf95.setFrequency(frequency);
 
   // Transmitter power can range from 14-20dbm.
-  rf95.setTxPower(14, true);
+  rf95.setTxPower(23, false);
 }
 
 
